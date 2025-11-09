@@ -2,34 +2,42 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>mew</title>
+<title>Regex Cleaner</title>
 <style>
     body { font-family: Arial; padding: 20px; }
     textarea { width: 100%; height: 200px; font-size: 14px; }
-    #out { white-space: pre-wrap; background: #f7f7f7; padding: 10px; margin-top: 15px; }
+    #out { white-space: pre-wrap; background: #f1f1f1; padding: 12px; margin-top: 10px; }
+    button { padding: 8px 16px; margin-bottom: 10px; cursor: pointer; }
 </style>
 </head>
 <body>
 
-<h3>Paste Text Below</h3>
-<textarea id="inp" placeholder="Paste copied text here..."></textarea>
+<h3>Paste Text Here</h3>
+<textarea id="inp" placeholder="Paste raw text..."></textarea>
 
 <h3>Filtered Output</h3>
+<button id="copyBtn">Copy Cleaned Text</button>
 <p id="out"></p>
 
 <script>
-// Regex pattern that removes the ENTIRE Coursera disclaimer block.
-// It matches from "You are" up to "related topics." (flexible spacing, =20, =, line breaks, etc.)
-const reg = /You are a .*/i;
+const pattern = /you\s+are\s+a\s+.*$/gmi;
 
 document.getElementById("inp").addEventListener("input", () => {
-    let txt = document.getElementById("inp").value;
+    let text = document.getElementById("inp").value;
 
-    // Remove the entire disclaimer block
-    txt = txt.replace(reg, "").trim();
+    // Remove ALL occurrences using regex gmi
+    text = text.replace(pattern, "").trim();
 
-    // Show output
-    document.getElementById("out").innerText = txt;
+    document.getElementById("out").innerText = text;
+});
+
+// Copy to clipboard
+document.getElementById("copyBtn").addEventListener("click", () => {
+    const cleaned = document.getElementById("out").innerText;
+
+    navigator.clipboard.writeText(cleaned).then(() => {
+        alert("Cleaned text copied to clipboard!");
+    });
 });
 </script>
 
