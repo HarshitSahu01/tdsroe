@@ -1,5 +1,5 @@
 # Name for the GitHub Actions workflow
-name: Matrix Build and Artifact Upload
+name: Matrix Build and Artifact Upload matrix-e387340
 
 # Triggers: Run on push to main or manually (workflow_dispatch)
 on:
@@ -30,8 +30,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       # Step 3: The required step with the specific identifier
-      - name: Show build variant
-        id: matrix-e387340  # This is the required step identifier
+      - name: matrix-e387340 # Changed name to be the identifier
+        id: matrix-e387340  # Kept id as well, which is good practice
         run: |
           echo "This job is building for Python version: ${{ matrix.python-version }}"
           python --version
