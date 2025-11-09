@@ -1,0 +1,52 @@
+# Name for the GitHub Actions workflow
+name: Matrix Build and Artifact Upload
+
+# Triggers: Run on push to main or manually (workflow_dispatch)
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Run this job on the latest Ubuntu runner
+    runs-on: ubuntu-latest
+    
+    # Define the matrix strategy
+    strategy:
+      matrix:
+        # Use 3 Python versions as the variants
+        python-version: ['3.9', '3.10', '3.11']
+
+    steps:
+      # Step 1: Check out the repository's code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up the specific Python version for this matrix job
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Step 3: The required step with the specific identifier
+      - name: Show build variant
+        id: matrix-e387340  # This is the required step identifier
+        run: |
+          echo "This job is building for Python version: ${{ matrix.python-version }}"
+          python --version
+
+      # Step 4: Generate a unique, non-empty build artifact
+      - name: Generate build artifact
+        run: |
+          echo "This is the build output for Python ${{ matrix.python-version }}" > build.log
+          echo "Timestamp: $(date)" >> build.log
+
+      # Step 5: Upload the artifact
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Artifact name includes the prefix and the variant
+          name: build-e387340-py${{ matrix.python-version }}
+          # Path to the file to upload
+          path: build.log
