@@ -1,127 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>MHTML Quiz Extractor</title>
 <meta charset="UTF-8">
+<title>Coursera Text Cleaner</title>
 <style>
-body { font-family: Arial; padding: 20px; }
-textarea { width: 100%; height: 300px; }
+    body { font-family: Arial; padding: 20px; }
+    textarea { width: 100%; height: 200px; font-size: 14px; }
+    #out { white-space: pre-wrap; background: #f7f7f7; padding: 10px; margin-top: 15px; }
 </style>
 </head>
 <body>
 
-<h2>Upload MHTML Quiz File</h2>
-<input type="file" id="mhtmlInput" accept=".mhtml">
-<br><br>
-<textarea id="output" placeholder="JSON output will appear here..."></textarea>
+<h3>Paste Text Below</h3>
+<textarea id="inp" placeholder="Paste copied text here..."></textarea>
+
+<h3>Filtered Output</h3>
+<p id="out"></p>
 
 <script>
-// ------- Utility: normalize text -------
-function norm(t) {
-    return (t || "").replace(/\s+/g, " ").trim();
-}
+// Regex pattern that removes the ENTIRE Coursera disclaimer block.
+// It matches from "You are" up to "related topics." (flexible spacing, =20, =, line breaks, etc.)
+const reg = /You\s*are[\s\S]*?related\s*topics\.?/i;
 
-// ------- Main MHTML parsing logic -------
-document.getElementById("mhtmlInput").addEventListener("change", async function() {
-    const file = this.files[0];
-    if (!file) return;
+document.getElementById("inp").addEventListener("input", () => {
+    let txt = document.getElementById("inp").value;
 
-    const text = await file.text();
+    // Remove the entire disclaimer block
+    txt = txt.replace(reg, "").trim();
 
-    // MHTML files contain MIME-like blocks separated with boundaries
-    const boundaryMatch = text.match(/boundary="([^"]+)"/i);
-    if (!boundaryMatch) {
-        document.getElementById("output").value = "Could not detect boundary.";
-        return;
-    }
-
-    const boundary = boundaryMatch[1];
-    const parts = text.split("--" + boundary);
-
-    let htmlParts = [];
-
-    for (const part of parts) {
-        if (part.includes("Content-Type: text/html")) {
-            // Remove MIME headers
-            const html = part.split("\n\n").slice(1).join("\n\n");
-            htmlParts.push(html);
-        }
-    }
-
-    if (htmlParts.length === 0) {
-        document.getElementById("output").value = "No HTML content found in MHTML.";
-        return;
-    }
-
-    // Merge all HTML parts
-    const html = htmlParts.join("\n<!--PARTBREAK-->");
-
-    // Parse HTML
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-
-    const questions = [];
-
-    // Common selectors for quiz questions
-    const qSelectors = [
-        '[data-test="quiz-question"]',
-        '[data-testid="quiz-question"]',
-        'div[class*="question"]',
-        'section[class*="question"]',
-        'li[class*="question"]'
-    ];
-
-    const qNodes = doc.querySelectorAll(qSelectors.join(", "));
-
-    let qno = 1;
-
-    qNodes.forEach(qb => {
-
-        const textFull = norm(qb.textContent);
-        if (!textFull || textFull.length < 10) return;
-
-        // Extract options
-        let options = [];
-
-        // Try label-based options
-        qb.querySelectorAll("label").forEach(lab => {
-            const t = norm(lab.textContent);
-            if (t) options.push(t);
-        });
-
-        // If no labels, try <li>
-        if (options.length === 0) {
-            qb.querySelectorAll("li").forEach(li => {
-                const t = norm(li.textContent);
-                if (t && t.length < 300) options.push(t);
-            });
-        }
-
-        // Remove options text from question prompt
-        let prompt = textFull;
-        options.forEach(o => prompt = prompt.replace(o, ""));
-        prompt = norm(prompt);
-
-        // Determine question type
-        let type = "mcq";
-        const checkboxes = qb.querySelectorAll("input[type=checkbox]").length;
-        const radios = qb.querySelectorAll("input[type=radio]").length;
-
-        if (checkboxes > 0) type = "msq";
-        else if (radios > 1) type = "mcq";
-
-        if (options.length === 0) return;
-
-        questions.push({
-            qno: qno++,
-            prompt: prompt,
-            type: type,
-            options: options
-        });
-    });
-
-    document.getElementById("output").value =
-        JSON.stringify(questions, null, 2);
+    // Show output
+    document.getElementById("out").innerText = txt;
 });
 </script>
 
